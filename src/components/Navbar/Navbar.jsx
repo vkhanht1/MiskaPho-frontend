@@ -204,9 +204,12 @@ const Navbar = () => {
             <h2 className="text-3xl font-dancingscript text-amber-500 mb-6 text-center">Welcome Back</h2>
             <Login onLoginSuccess={() => {
               window.dispatchEvent(new Event('authChange'));
-              navigate('/');
+              if (location.pathname === '/login') {
+                navigate('/');
+              }
             }}
-              onClose={() => navigate('/')} />
+              onClose={() => navigate('/')}
+            />
           </div>
         </div>
       )}

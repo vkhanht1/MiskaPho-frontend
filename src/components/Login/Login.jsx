@@ -14,7 +14,7 @@ const Login = ({ onLoginSuccess, onClose }) => {
   const [toast, setToast] = useState({ visible: false, message: '', isError: false });
 
   useEffect(() => {
-    const stored = localStorage.getItem('loginData');
+    const stored = localStorage.getItem('rememberedAccount');
     if (stored) setFormData(JSON.parse(stored));
   }, []);
 
@@ -37,11 +37,13 @@ const Login = ({ onLoginSuccess, onClose }) => {
       if (res.data.success) {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('authToken', res.data.token);
+        localStorage.setItem('loginData', res.data.token);
         localStorage.setItem('userInfo', JSON.stringify(res.data.user));
+        window.dispatchEvent(new Event('authChange'));
         if (formData.rememberMe) {
-          localStorage.setItem('loginData', JSON.stringify(formData));
+          localStorage.setItem('rememberedAccount', JSON.stringify(formData));
         } else {
-          localStorage.removeItem('loginData');
+          localStorage.removeItem('rememberedAccount');
         }
         setToast({ visible: true, message: 'Login successful!', isError: false });
         setTimeout(() => {
