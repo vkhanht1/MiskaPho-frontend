@@ -16,27 +16,25 @@ const Navbar = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const checkAuthStatus = () => {
-    const loginData = localStorage.getItem('token') || localStorage.getItem('loginData');
-    const storedUserInfo = localStorage.getItem('userInfo');
-
-    if (loginData && storedUserInfo) {
-      setIsAuthenticated(true);
+    const isAuth = Boolean(localStorage.getItem('loginData'));
+    setIsAuthenticated(isAuth);
+    if (isAuth) {
       try {
-        setUserInfo(JSON.parse(storedUserInfo));
-      } catch (error) {
-        console.error("Failed to parse userInfo:", error);
+        setUserInfo(JSON.parse(localStorage.getItem('userInfo')));
+      } catch {
         setUserInfo(null);
       }
     } else {
-      setIsAuthenticated(false);
       setUserInfo(null);
     }
   };
 
   useEffect(() => {
     checkAuthStatus();
+
     window.addEventListener('authChange', checkAuthStatus);
     window.addEventListener('storage', checkAuthStatus);
+
     return () => {
       window.removeEventListener('authChange', checkAuthStatus);
       window.removeEventListener('storage', checkAuthStatus);
@@ -44,7 +42,11 @@ const Navbar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'auto';
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
     return () => { document.body.style.overflow = 'auto'; };
   }, [isOpen]);
 
@@ -71,13 +73,11 @@ const Navbar = () => {
     setIsAuthenticated(false);
     setUserInfo(null);
     window.dispatchEvent(new Event('authChange'));
-    navigate('/');
-    setIsOpen(false);
+    navigate('/login');
   };
 
   const UserDropdown = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
     useEffect(() => {
       const closeDropdown = () => setIsDropdownOpen(false);
       if (isDropdownOpen) window.addEventListener('click', closeDropdown);
@@ -88,33 +88,26 @@ const Navbar = () => {
       <div className="relative" onClick={(e) => e.stopPropagation()}>
         <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 
-          hover:border-amber-500 transition-all focus:outline-none">
+        hover:border-amber-500 transition-all focus:outline-none">
           <div className="w-8 h-8 rounded-full bg-amber-500 text-[#1a120b] flex items-center 
           justify-center font-bold text-sm">
             {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
           </div>
           <span className="hidden md:block text-amber-100 text-sm font-cinzel">{userInfo?.name}</span>
         </button>
-
         <div className={`absolute right-0 top-full pt-4 w-56 transition-all duration-300 transform 
           ${isDropdownOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'}`}>
           <div className="bg-[#1a120b] border border-amber-900/50 rounded-lg shadow-2xl overflow-hidden backdrop-blur-md">
             <div className="py-1">
               <Link to="/myorders" onClick={() => setIsDropdownOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 text-sm text-amber-100/80 
-                hover:bg-amber-900/30 hover:text-amber-500 transition-colors border-b border-amber-900/20">
-                <FiPackage /> My Orders
-              </Link>
+              hover:bg-amber-900/30 hover:text-amber-500 transition-colors border-b border-amber-900/20"><FiPackage /> My Orders</Link>
               <Link to="/my-bookings" onClick={() => setIsDropdownOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 text-sm text-amber-100/80 
-                hover:bg-amber-900/30 hover:text-amber-500 transition-colors border-b border-amber-900/20">
-                <FiCalendar /> My Bookings
-              </Link>
-              <button onClick={handleLogout}
+              hover:bg-amber-900/30 hover:text-amber-500 transition-colors border-b border-amber-900/20"><FiCalendar /> My Bookings</Link>
+              <button onClick={() => { handleLogout(); setIsDropdownOpen(false); }}
                 className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-400 
-                hover:bg-red-900/20 transition-colors">
-                <FiLogOut /> Logout
-              </button>
+              hover:bg-red-900/20 transition-colors"><FiLogOut /> Logout</button>
             </div>
           </div>
         </div>
@@ -127,10 +120,9 @@ const Navbar = () => {
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b border-transparent 
         ${scrolled ? 'bg-[#1a120b]/95 backdrop-blur-md py-3 shadow-lg border-amber-900/30' : 'bg-transparent py-6'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-
           <Link to="/" className="flex items-center gap-3 group">
-            <img src={logoImage} alt="MiskaPho Logo" style={{ filter: 'brightness(0) invert(1)' }}
-              className="w-12 h-12 md:w-14 md:h-14 object-contain mr-3 group-hover:scale-110 transition-transform duration-300" />
+            <img src={logoImage} alt="MiskaPho Logo" style={{ filter: 'brightness(0) invert(1)' }} className="w-12 h-12 md:w-14 md:h-14 
+            object-contain mr-3 group-hover:scale-110 transition-transform duration-300" />
             <div className="flex flex-col">
               <span className="text-2xl md:text-3xl font-dancingscript text-amber-100 font-bold leading-none tracking-wide">MiskaPho</span>
               <span className="text-[10px] md:text-xs text-amber-500/80 font-cinzel tracking-[0.3em] uppercase ml-1">Restaurant</span>
@@ -140,7 +132,7 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <NavLink key={link.name} to={link.href} className={({ isActive }) => `text-sm font-cinzel uppercase tracking-[0.15em] 
-                transition-all duration-300 relative group py-2 ${isActive ? 'text-amber-500' : 'text-amber-100/70 hover:text-amber-100'}`}>
+              transition-all duration-300 relative group py-2 ${isActive ? 'text-amber-500' : 'text-amber-100/70 hover:text-amber-100'}`}>
                 {link.name}
                 <span className="absolute bottom-0 left-0 w-0 h-px bg-amber-500 transition-all duration-300 group-hover:w-full"></span>
               </NavLink>
@@ -150,15 +142,10 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-6">
             <Link to="/cart" className="relative text-amber-100/70 hover:text-amber-500 transition-colors group">
               <FiShoppingCart size={20} />
-              {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-amber-600 text-[#1a120b] text-[10px] w-4 h-4 
-                rounded-full flex items-center justify-center font-bold">{totalItems}</span>
-              )}
+              {totalItems > 0 && <span className="absolute -top-2 -right-2 bg-amber-600 text-[#1a120b] text-[10px] w-4 h-4 
+              rounded-full flex items-center justify-center font-bold">{totalItems}</span>}
             </Link>
-
-            {isAuthenticated ? (
-              <UserDropdown />
-            ) : (
+            {isAuthenticated ? <UserDropdown /> : (
               <button onClick={() => navigate('/login')} className="flex items-center gap-2 px-6 py-2 border border-amber-500/50 
               rounded-full text-xs font-cinzel uppercase tracking-widest text-amber-500 hover:bg-amber-500 hover:text-[#1a120b] 
               transition-all duration-300"><FiUser /> Login</button>
@@ -168,7 +155,8 @@ const Navbar = () => {
           <div className="lg:hidden flex items-center gap-4">
             <Link to="/cart" className="relative text-amber-100 hover:text-amber-500">
               <FiShoppingCart size={20} />
-              {totalItems > 0 && <span className="absolute -top-2 -right-2 bg-amber-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{totalItems}</span>}
+              {totalItems > 0 && <span className="absolute -top-2 -right-2 bg-amber-600 text-white text-[9px] w-4 h-4 rounded-full 
+              flex items-center justify-center font-bold">{totalItems}</span>}
             </Link>
             <button onClick={() => setIsOpen(!isOpen)} className="text-amber-500 text-2xl z-[110] relative focus:outline-none">
               {isOpen ? <FiX /> : <FiMenu />}
@@ -179,7 +167,8 @@ const Navbar = () => {
         <div className={`fixed inset-0 top-0 left-0 w-full h-screen bg-[#1a120b] z-[100] flex flex-col items-center justify-center gap-8 
           transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="mb-4">
-            <img src={logoImage} alt="Logo" style={{ filter: 'brightness(0) invert(1)' }} className="w-16 h-16 opacity-50" />
+            <img src={logoImage} alt="Logo" style={{ filter: 'brightness(0) invert(1)' }}
+              className="w-16 h-16 opacity-50" />
           </div>
           {navLinks.map((link) => (
             <NavLink key={link.name} to={link.href} onClick={() => setIsOpen(false)}
@@ -190,12 +179,19 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <div className="flex flex-col items-center gap-6">
-              <Link to="/myorders" onClick={() => setIsOpen(false)} className="text-amber-100/80 hover:text-amber-500 flex items-center gap-3 text-2xl font-cinzel uppercase tracking-widest"><FiPackage /> My Orders</Link>
-              <Link to="/my-bookings" onClick={() => setIsOpen(false)} className="text-amber-100/80 hover:text-amber-500 flex items-center gap-3 text-2xl font-cinzel uppercase tracking-widest"><FiCalendar /> My Bookings</Link>
-              <button onClick={handleLogout} className="text-red-400 flex items-center gap-3 text-2xl font-cinzel uppercase tracking-widest mt-4"><FiLogOut /> Logout</button>
+              <Link to="/myorders" onClick={() => setIsOpen(false)}
+                className="text-amber-100/80 hover:text-amber-500 flex items-center gap-3 text-2xl 
+              font-cinzel uppercase tracking-widest"><FiPackage /> My Orders</Link>
+              <Link to="/my-bookings" onClick={() => setIsOpen(false)}
+                className="text-amber-100/80 hover:text-amber-500 flex items-center gap-3 text-2xl 
+              font-cinzel uppercase tracking-widest"><FiCalendar /> My Bookings</Link>
+              <button onClick={() => { handleLogout(); setIsOpen(false); }}
+                className="text-red-400 flex items-center gap-3 text-2xl font-cinzel uppercase 
+              tracking-widest mt-4"><FiLogOut /> Logout</button>
             </div>
           ) : (
-            <button onClick={() => { navigate('/login'); setIsOpen(false); }} className="text-2xl font-cinzel text-amber-500 border border-amber-500 px-10 py-3 rounded-full hover:bg-amber-500 hover:text-black transition-all">Login</button>
+            <button onClick={() => { navigate('/login'); setIsOpen(false); }} className="text-2xl font-cinzel text-amber-500 border 
+            border-amber-500 px-10 py-3 rounded-full hover:bg-amber-500 hover:text-black transition-all">Login</button>
           )}
         </div>
       </nav>
@@ -203,15 +199,14 @@ const Navbar = () => {
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
           <div className="bg-[#1a120b] rounded-2xl p-8 w-full max-w-md relative border border-amber-900/50 shadow-2xl">
-            <button onClick={() => navigate('/')} className="absolute top-4 right-4 text-amber-500/50 hover:text-amber-500 text-2xl transition-colors">&times;</button>
+            <button onClick={() => navigate('/')} className="absolute top-4 right-4 text-amber-500/50 hover:text-amber-500
+             text-2xl transition-colors">&times;</button>
             <h2 className="text-3xl font-dancingscript text-amber-500 mb-6 text-center">Welcome Back</h2>
-            <Login
-              onLoginSuccess={() => {
-                window.dispatchEvent(new Event('authChange'));
-                navigate('/');
-              }}
-              onClose={() => navigate('/')}
-            />
+            <Login onLoginSuccess={() => {
+              window.dispatchEvent(new Event('authChange'));
+              navigate('/');
+            }}
+              onClose={() => navigate('/')} />
           </div>
         </div>
       )}
