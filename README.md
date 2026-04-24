@@ -10,9 +10,14 @@ https://miska-pho-frontend.vercel.app/
 
     Tech Stack:
 
-Frontend: React.js 
+Frontend: React.js
+
 Styling: Tailwind CSS
+
 Navigation: React Router DOM
+
 Payment Integration: Stripe
-State Management: React Context API 
+
+State Management: React Context API
+
 Data Fetching: Axios
